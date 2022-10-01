@@ -30,7 +30,6 @@ public class StudentServiceimpl implements StudentService {
     public void doAdd() {
         stuDAO.add();
     }
-
     public Integer sum(int num1, int num2) {
         System.out.println("======sum======");
         return num1+num2;
