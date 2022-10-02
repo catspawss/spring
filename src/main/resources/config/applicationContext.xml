@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--    配置数据源,不再mybaties中配置了，直接在spring里配置-->
+    <!--    dbcp数据源作为连接池-->
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/school?serverTimezone=UTC"/>
+        <property name="username" value="root"/>
+        <property name="password" value="1234"/>
+    </bean>
+    <!--    配置会话工厂，让会话工厂交给Spring托管-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--        指定mybaties核心配置文件-->
+        <property name="configLocation" value="config/Mybatis-config.xml"/>
+        <!--        指定数据源，ref上面的数据源，通过id-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--        加载mapper映射文件-->
+        <property name="mapperLocations">
+            <list>
+                <!--    可以通过通配符-->
+                <value>classpath:mapper/TeacherMapper.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--    添加一个TeacherDAO的实现类，就可以不用自己手动写实现类，直接根据id调用即可-->
+<!--    <bean id="teaDAO" class="org.mybatis.spring.mapper.MapperFactoryBean">-->
+<!--        <property name="sqlSessionFactory" ref="sqlSessionFactory"/>-->
+<!--        <property name="mapperInterface" value="com.dao.TeacherDAO"/>-->
+<!--    </bean>-->
+
+    <!--    mapper扫描器,可以批量生成实现类，可指定多包，逗号或者分号分割-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.dao"/>
+    </bean>
+
+    <!--    将一个实体类绑定到配置文件中，class为实体类的地址，以后用id取-->
+    <!--    <bean id="stu" class="com.entity.Student">-->
+    <!--        &lt;!&ndash;        依赖注入，实际是调用set方法，name为对应的属性，会自动类型转换成name自己的类型,<null/>表示注入空值&ndash;&gt;-->
+    <!--        &lt;!&ndash;        <property name="stuId" value="11"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;        <property name="stuName" value="张三"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;        通过构造函数的方式注入，可以用index下标表示注入哪个，或者使用属性名name，还要指明类型type&ndash;&gt;-->
+    <!--        &lt;!&ndash;        <constructor-arg index="0" value="11"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;        <constructor-arg index="1" value="zhangsan"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;        <constructor-arg name="stuName" value="zhangsan"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;        通过引入p标签的方式注入，实际上是第一种的简写，还是调用set方法,-->
+    <!--                    p:stuId="1000" p:stuName="zhans"写在bean标签上，不是里面-->
+    <!--                    如果是对象，就p:stuName-ref="zhans"&ndash;&gt;-->
+    <!--    </bean>-->
+    <!--    <bean id="person" class="com.entity.Person">-->
+    <!--        <property name="name" value="zhangsan"/>-->
+    <!--        <property name="hobbies">-->
+    <!--            &lt;!&ndash;    当属性是数组是使用该方法注入&ndash;&gt;-->
+    <!--            <list>-->
+    <!--                <value>足球</value>-->
+    <!--                <value>篮球</value>-->
+    <!--                <value>排球</value>-->
+    <!--            </list>-->
+    <!--        </property>-->
+    <!--    </bean>-->
+
+    <!--    <bean id="stuDAO" class="com.dao.impl.StudentDAOimpl"/>-->
+    <bean id="blackPrinter" class="com.demo.BlackPrinter"/>
+    <bean id="colorPrinter" class="com.demo.ColorPrinter"/>
+    <bean id="computer" class="com.demo.Computer">
+        <!--        当注入复杂对象的时候用ref,基本数据类型使用value-->
+        <property name="printable" ref="colorPrinter"/>
+    </bean>
+    <!-- 通知，拦截器 -->
+    <bean id="beforeAdvice" class="com.advice.BeforeAdvice"/>
+    <bean id="afterAdvice" class="com.advice.AfterAdvice"/>
+    <aop:config>
+        <!--        配置一个切面(哪些类的哪些方法会被拦截的意思) pointcut:切入点
+                    expression:表达式(拦截哪些方法)-->
+        <aop:pointcut id="pt" expression="execution(String add(..))"/>
+        <aop:aspect ref="beforeAdvice">
+            <!--            拦截的时机，ref引用一个通知对象，由这个对象进行拦截，before表示方法执行前拦截
+                            method表示调用通知里的哪一个方法-->
+            <aop:before method="doBefore" pointcut-ref="pt"/>
+        </aop:aspect>
+        <aop:aspect ref="afterAdvice">
+            <aop:after-returning method="doAfter" returning="result" pointcut-ref="pt"/>
+        </aop:aspect>
+    </aop:config>
+
+    <!--    用于扫描base-package目录下的包中是否有@Component注解，有就加入到Spring托管-->
+    <context:component-scan base-package="com"/>
+
+    <!--    开启自动代理，使得@Aspect注解起作用（切面注解）-->
+    <aop:aspectj-autoproxy/>
+</beans>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.TeacherDAO">
+<!--    <select id="countTeacher" resultType="int">-->
+<!--        SELECT COUNT(1) FROM teacher-->
+<!--    </select>-->
+
+<!--    resultType是元素的类型，不管是不是集合，实体类要写完整的限定名-->
+    <select id="getAll" resultType="Teacher">
+        SELECT * FROM teacher
+    </select>
+
+<!--    传入单个基本输入类型，随便写，最好同名-->
+<!--    <select id="getById" resultType="Teacher">-->
+<!--        SELECT * FROM teacher where teaId=#{teaId}-->
+<!--    </select>-->
+
+<!--    <delete id="delete">-->
+<!--        delete from teacher where teaId=#{teaId}-->
+<!--    </delete>-->
+
+
+<!--    传入单个对象，直接写对象的属性名，区分大小写-->
+    <insert id="add" parameterType="Teacher">
+        insert into teacher values (null,#{teaName},#{teaAge},#{createDate})
+    </insert>
+
+<!--    <select id="getByNameAndAge" resultType="Teacher">-->
+<!--        SELECT * FROM teacher where teaName=#{teaName} and teaAge=#{teaAge}-->
+<!--    </select>-->
+
+<!--    <select id="getByName" resultType="Teacher">-->
+<!--        SELECT * FROM teacher where teaName like CONCAT( '%', #{teaName}, '%')-->
+<!--    </select>-->
+</mapper>
